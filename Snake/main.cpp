@@ -2,18 +2,17 @@
 #include <QQuickView>
 #include "SnakeGlobal.h"
 
-namespace SNAKE
+
+int main(int argc, char *argv[])
 {
-    int main(int argc, char *argv[])
-    {
-        QGuiApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
 
-        qmlRegisterType<Snake>("com.gmail.ddkv587", 1, 0, "Snake");
+    qmlRegisterType<Snake>("com.gmail.ddkv587", 1, 0, "Snake");
 
-        QQuickView viewer;
-        viewer.setSource(QUrl(("qrc:/main.qml")));
-        viewer.show();
+    QQuickView viewer;
+    viewer.setSource(QUrl(("qrc:/main.qml")));
+    viewer.show();
 
-        return app.exec();
-    }
+    return app.exec();
 }
+

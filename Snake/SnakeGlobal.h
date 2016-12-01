@@ -1,12 +1,10 @@
 #ifndef SNAKEGLOBAL_H
 #define SNAKEGLOBAL_H
 
-namespace SNAKE
-{
-    class Cell;
-    class Control;
-    class Snake;
-}
+class Cell;
+class Control;
+class Snake;
+
 
 #include "include/Cell.h"
 #include "include/Control.h"
