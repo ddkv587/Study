@@ -33,8 +33,8 @@ public:
     };
 
 public:
-    Cell();
-    Cell(const Cell &cell);
+    Cell(QQuickItem *parent = NULL);
+    Cell(const Cell &cell, QQuickItem *parent = NULL);
     virtual ~Cell();
 
     void                setShape(ENUM_ESHAPE shape);

@@ -7,14 +7,9 @@ Rectangle {
     height: 640
     color: "lightblue"
 
-    Rectangle {
+    Snake {
         width: 320
         height: 480
-        color: "white"
-
-        Snake {
-
-        }
+        color: "lightcyan"
     }
-
 }

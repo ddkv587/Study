@@ -2,12 +2,19 @@
 #include <QSGFlatColorMaterial>
 #include "SnakeGlobal.h"
 
-Cell::Cell()
+Cell::Cell(QQuickItem *parent)
+    : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
+    setX(0);
+    setY(0);
+
+    m_iSize = 0;
+    m_eShape = EMSHAPE_INVALID;
 }
 
-Cell::Cell(const Cell &cell)
+Cell::Cell(const Cell &cell, QQuickItem *parent)
+    : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
     setX(cell.x());
@@ -53,12 +60,14 @@ int Cell::size() const
 
 void Cell::addVertex(Cell::Position *point)
 {
+    qDebug() << __FUNCTION__ << "<" << point->X() << "," << point->Y() << ">";
     m_lstVertex.append(point);
 }
 
 void Cell::cleanVertex()
 {
-    for(int index=0; index < m_lstVertex.count(); ++index) {
+    int count = m_lstVertex.count();
+    for(int index=0; index < count; ++index) {
         if(NULL != m_lstVertex.front())
             free(m_lstVertex.front());
 
@@ -71,10 +80,10 @@ void Cell::updateVertex()
     switch(m_eShape) {
     case EMSHAPE_RECTANGLE:
         cleanVertex();
-        addVertex(new Position(x, y));
-        addVertex(new Position(x, y + m_iSize));
-        addVertex(new Position(x + m_iSize, y + m_iSize));
-        addVertex(new Position(x + m_iSize, y));
+        addVertex(new Position(x(), y()));
+        addVertex(new Position(x(), y() + m_iSize));
+        addVertex(new Position(x() + m_iSize, y() + m_iSize));
+        addVertex(new Position(x() + m_iSize, y()));
         break;
     default:
         break;
@@ -86,9 +95,11 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
     QSGGeometryNode *node = 0;
     QSGGeometry *geometry = 0;
 
+    qDebug() << __FUNCTION__;
+
     if (!oldNode) {
         node = new QSGGeometryNode;
-        geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 4);
+        geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
         geometry->setLineWidth(2);
         geometry->setDrawingMode(GL_LINE_LOOP);
         node->setGeometry(geometry);
@@ -100,15 +111,17 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
     } else {
         node = static_cast<QSGGeometryNode *>(oldNode);
         geometry = node->geometry();
-        geometry->allocate(m_segmentCount);
+        geometry->allocate( m_lstVertex.count() );
     }
 
     QSGGeometry::Point2D *vertices = geometry->vertexDataAsPoint2D();
+    qDebug()<<"=================== begin";
     for (int i = 0; i < m_lstVertex.count(); ++i) {
-        vertices[i].set(m_lstVertex[i].X(), m_lstVertex[i].Y());
+        qDebug() << "<" << m_lstVertex[i]->X() << "," << m_lstVertex[i]->Y() << ">";
+        vertices[i].set(m_lstVertex[i]->X(), m_lstVertex[i]->Y());
     }
     node->markDirty(QSGNode::DirtyGeometry);
-
+    qDebug()<<"=================== end";
     return node;
 }
 
