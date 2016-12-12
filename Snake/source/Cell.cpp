@@ -4,13 +4,13 @@
 
 Cell::Cell(QQuickItem *parent)
     : QQuickItem(parent)
+    , m_fSize(0)
+    , m_fBoundSize(0)
+    , m_eShape(EMSHAPE_INVALID)
 {
     setFlag(ItemHasContents, true);
     setX(0);
     setY(0);
-
-    m_iSize = 0;
-    m_eShape = EMSHAPE_INVALID;
 }
 
 Cell::Cell(const Cell &cell, QQuickItem *parent)
@@ -20,9 +20,9 @@ Cell::Cell(const Cell &cell, QQuickItem *parent)
     setX(cell.x());
     setY(cell.y());
 
-    m_iSize = cell.size();
-    m_eShape = cell.shape();
-    updateVertex();
+    m_fSize = cell.size();
+    m_fBoundSize = cell.boundSize();
+    m_eShape = cell.shape();   
 }
 
 Cell::~Cell()
@@ -35,7 +35,6 @@ void Cell::setShape(Cell::ENUM_ESHAPE shape)
     ENUM_ESHAPE shapeBak = m_eShape;
     m_eShape = shape;
 
-    updateVertex();
     emit notifyShapeChanged(m_eShape, shapeBak);
 }
 
@@ -46,16 +45,28 @@ Cell::ENUM_ESHAPE Cell::shape() const
 
 void Cell::setSize(int size)
 {
-    int sizeBak = m_iSize;
-    m_iSize = size;
+    int sizeBak = m_fSize;
+    m_fSize = size;
 
-    updateVertex();
-    emit notifySizeChanged(m_iSize, sizeBak);
+    emit notifySizeChanged(m_fSize, sizeBak);
 }
 
 int Cell::size() const
 {
-    return m_iSize;
+    return m_fSize;
+}
+
+void Cell::setBoundSize(int size)
+{
+    int sizeBak = m_fBoundSize;
+    m_fBoundSize = size;
+
+    emit notifyBoundSizeChanged(m_fBoundSize, sizeBak);
+}
+
+int Cell::boundSize() const
+{
+    return m_fBoundSize;
 }
 
 void Cell::addVertex(Cell::Position *point)
@@ -80,10 +91,49 @@ void Cell::updateVertex()
     switch(m_eShape) {
     case EMSHAPE_RECTANGLE:
         cleanVertex();
-        addVertex(new Position(x(), y()));
-        addVertex(new Position(x(), y() + m_iSize));
-        addVertex(new Position(x() + m_iSize, y() + m_iSize));
-        addVertex(new Position(x() + m_iSize, y()));
+        addVertex(new Position(m_fBoundSize, m_fBoundSize));
+        addVertex(new Position(m_fBoundSize, m_fSize - m_fBoundSize));
+        addVertex(new Position(m_fSize - m_fBoundSize, m_fSize - m_fBoundSize));
+        addVertex(new Position(m_fSize - m_fBoundSize, m_fBoundSize));
+        break;
+    default:
+        break;
+    }
+}
+
+void Cell::addBoundVertex(Cell::Position *point)
+{
+    qDebug() << __FUNCTION__ << "<" << point->X() << "," << point->Y() << ">";
+    m_lstVertexBound.append(point);
+}
+
+void Cell::cleanBoundVertex()
+{
+    int count = m_lstVertexBound.count();
+    for(int index=0; index < count; ++index) {
+        if(NULL != m_lstVertexBound.front())
+            free(m_lstVertexBound.front());
+
+        m_lstVertexBound.removeFirst();
+    }
+}
+
+void Cell::updateBoundVertex()
+{
+    switch(m_eShape) {
+    case EMSHAPE_RECTANGLE:
+        cleanBoundVertex();
+        addBoundVertex(new Position(0, m_fBoundSize / 2));
+        addBoundVertex(new Position(m_fSize, m_fBoundSize / 2));
+
+        addBoundVertex(new Position(0, m_fSize - m_fBoundSize / 2));
+        addBoundVertex(new Position(m_fSize, m_fSize - m_fBoundSize / 2));
+
+        addBoundVertex(new Position(m_fBoundSize / 2, m_fBoundSize / 2));
+        addBoundVertex(new Position(m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
+
+        addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fBoundSize / 2));
+        addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
         break;
     default:
         break;
@@ -92,36 +142,74 @@ void Cell::updateVertex()
 
 QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
 {
-    QSGGeometryNode *node = 0;
-    QSGGeometry *geometry = 0;
+    QSGNode *backGround = NULL;
+
+    QSGGeometry *geometryContain;
+    QSGGeometry *geometryBound;
 
     qDebug() << __FUNCTION__;
 
+    updateVertex();
+    updateBoundVertex();
+
     if (!oldNode) {
-        node = new QSGGeometryNode;
-        geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
-        geometry->setLineWidth(2);
-        geometry->setDrawingMode(GL_LINE_LOOP);
-        node->setGeometry(geometry);
-        node->setFlag(QSGNode::OwnsGeometry);
-        QSGFlatColorMaterial *material = new QSGFlatColorMaterial;
-        material->setColor(QColor(255, 0, 0));
-        node->setMaterial(material);
-        node->setFlag(QSGNode::OwnsMaterial);
+        backGround = new QSGNode;
+
+        QSGGeometryNode *contain = new QSGGeometryNode;
+        QSGGeometryNode *bound   = new QSGGeometryNode;
+
+        geometryContain = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
+        geometryBound   = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertexBound.count());
+
+
+
+        geometryContain->setDrawingMode(GL_TRIANGLE_FAN);
+        geometryContain->allocate(m_lstVertex.count());
+        contain->setGeometry(geometryContain);
+        contain->setFlag(QSGNode::OwnsGeometry);
+
+        QSGFlatColorMaterial *materialContain = new QSGFlatColorMaterial;
+        materialContain->setColor(QColor(255, 0, 0));
+        contain->setMaterial(materialContain);
+        contain->setFlag(QSGNode::OwnsMaterial);
+
+
+
+        geometryBound->setDrawingMode(GL_LINES);
+        geometryBound->allocate(m_lstVertexBound.count());
+        geometryBound->setLineWidth(m_fBoundSize);
+        bound->setGeometry(geometryBound);
+        bound->setFlag(QSGNode::OwnsGeometry);
+
+        QSGFlatColorMaterial *materialBound = new QSGFlatColorMaterial;
+        materialBound->setColor(QColor(0, 0, 255));
+        bound->setMaterial(materialBound);
+        bound->setFlag(QSGNode::OwnsMaterial);
+
+
+        backGround->appendChildNode(contain);
+        backGround->appendChildNode(bound);
     } else {
-        node = static_cast<QSGGeometryNode *>(oldNode);
-        geometry = node->geometry();
-        geometry->allocate( m_lstVertex.count() );
+        backGround = oldNode;
+        geometryContain = (static_cast<QSGGeometryNode *>(backGround->childAtIndex(0)))->geometry();
+        geometryBound   = (static_cast<QSGGeometryNode *>(backGround->childAtIndex(1)))->geometry();
     }
 
-    QSGGeometry::Point2D *vertices = geometry->vertexDataAsPoint2D();
+    QSGGeometry::Point2D *verticesContain = geometryContain->vertexDataAsPoint2D();
     qDebug()<<"=================== begin";
     for (int i = 0; i < m_lstVertex.count(); ++i) {
         qDebug() << "<" << m_lstVertex[i]->X() << "," << m_lstVertex[i]->Y() << ">";
-        vertices[i].set(m_lstVertex[i]->X(), m_lstVertex[i]->Y());
+        verticesContain[i].set(m_lstVertex[i]->X(), m_lstVertex[i]->Y());
     }
-    node->markDirty(QSGNode::DirtyGeometry);
-    qDebug()<<"=================== end";
-    return node;
-}
 
+    QSGGeometry::Point2D *verticesBound = geometryBound->vertexDataAsPoint2D();
+    qDebug()<<"=================== begin";
+    for (int i = 0; i < m_lstVertexBound.count(); ++i) {
+        qDebug() << "<" << m_lstVertexBound[i]->X() << "," << m_lstVertexBound[i]->Y() << ">";
+        verticesBound[i].set(m_lstVertexBound[i]->X(), m_lstVertexBound[i]->Y());
+    }
+    qDebug()<<"=================== end";
+
+    backGround->markDirty(QSGNode::DirtyGeometry);
+    return backGround;
+}

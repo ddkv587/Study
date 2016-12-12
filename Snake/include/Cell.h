@@ -43,10 +43,17 @@ public:
     void                setSize(int size);
     int                 size() const;
 
+    void                setBoundSize(int size);
+    int                 boundSize() const;
+
     void                addVertex(Position *point);
 //    Position&           delVertex(const Position point) { Q_UNUSED(point) }
     void                cleanVertex();
     void                updateVertex();
+
+    void                addBoundVertex(Cell::Position *point);
+    void                cleanBoundVertex();
+    void                updateBoundVertex();
 
     QSGNode             *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *);
 
@@ -54,14 +61,17 @@ public:
 signals:
     void                notifyShapeChanged(ENUM_ESHAPE newShape, ENUM_ESHAPE oldShape);
     void                notifySizeChanged(int newSize, int oldSize);
+    void                notifyBoundSizeChanged(int newSize, int oldSize);
 
 public slots:
 
 private:
 
 private:
-    int m_iSize;
+    float m_fSize;
+    float m_fBoundSize;
     QList<Position *> m_lstVertex;
+    QList<Position *> m_lstVertexBound;
     ENUM_ESHAPE m_eShape;
 };
 #endif

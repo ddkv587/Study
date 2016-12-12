@@ -1,6 +1,6 @@
 import QtQuick 2.7
 import QtQuick.Window 2.2
-import com.gmail.ddkv587 1.0
+import com.gmail.ddkv587.Snake 1.0
 
 Rectangle {
     width: 480

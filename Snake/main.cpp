@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    qmlRegisterType<Snake>("com.gmail.ddkv587", 1, 0, "Snake");
+    qmlRegisterType<Snake>("com.gmail.ddkv587.Snake", 1, 0, "Snake");
 
     QQuickView viewer;
     viewer.setSource(QUrl(("qrc:/main.qml")));

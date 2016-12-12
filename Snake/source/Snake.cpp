@@ -10,10 +10,10 @@ Snake::Snake()
 {
     setFlag(ItemHasContents, true);
 
- //   addCell(Cell::Position(0, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
+    addCell(Cell::Position(0, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
     addCell(Cell::Position(DEF_CELL_SIZE, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
-//    addCell(Cell::Position(DEF_CELL_SIZE*2, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
-//    addCell(Cell::Position(DEF_CELL_SIZE*3, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
+    addCell(Cell::Position(DEF_CELL_SIZE*2, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
+    addCell(Cell::Position(DEF_CELL_SIZE*3, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
 }
 
 Snake::~Snake()
@@ -36,6 +36,7 @@ void Snake::addCell(Cell::Position posi, Cell::ENUM_ESHAPE shape, int size)
     cell->setY(posi.Y());
     cell->setShape(shape);
     cell->setSize(size);
+    cell->setBoundSize(2);
 
     qDebug() << "<" << posi.X() << "," << posi.Y() << ">" <<endl;
 
@@ -69,8 +70,8 @@ QSGNode *Snake::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNodeData *
     QSGSimpleRectNode *n = static_cast<QSGSimpleRectNode *>(node);
     if (!n) {
         n = new QSGSimpleRectNode();
-        n->setColor(m_color);
     }
+    n->setColor(m_color);
     n->setRect(boundingRect());
 
     for(int i=0; i<m_lstPCell.count(); ++i)
