@@ -6,7 +6,7 @@ Cell::Cell(QQuickItem *parent)
     : QQuickItem(parent)
     , m_fSize(0)
     , m_fBoundSize(0)
-    , m_eShape(EMSHAPE_INVALID)
+    , m_eShape(EMSHAPE_Invalid)
 {
     setFlag(ItemHasContents, true);
     setX(0);
@@ -89,12 +89,37 @@ void Cell::cleanVertex()
 void Cell::updateVertex()
 {
     switch(m_eShape) {
-    case EMSHAPE_RECTANGLE:
+    case EMSHAPE_Rectangle:
         cleanVertex();
         addVertex(new Position(m_fBoundSize, m_fBoundSize));
         addVertex(new Position(m_fBoundSize, m_fSize - m_fBoundSize));
         addVertex(new Position(m_fSize - m_fBoundSize, m_fSize - m_fBoundSize));
         addVertex(new Position(m_fSize - m_fBoundSize, m_fBoundSize));
+
+        if(m_fBoundSize > 0) {
+            cleanBoundVertex();
+            addBoundVertex(new Position(0, m_fBoundSize / 2));
+            addBoundVertex(new Position(m_fSize, m_fBoundSize / 2));
+
+            addBoundVertex(new Position(0, m_fSize - m_fBoundSize / 2));
+            addBoundVertex(new Position(m_fSize, m_fSize - m_fBoundSize / 2));
+
+            addBoundVertex(new Position(m_fBoundSize / 2, m_fBoundSize / 2));
+            addBoundVertex(new Position(m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
+
+            addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fBoundSize / 2));
+            addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
+        }
+        break;
+
+    case EMSHAPE_RoundedRectangle:
+        cleanVertex();
+
+
+        break;
+    case EMSHAPE_Circle:
+        cleanVertex();
+
         break;
     default:
         break;
@@ -118,28 +143,6 @@ void Cell::cleanBoundVertex()
     }
 }
 
-void Cell::updateBoundVertex()
-{
-    switch(m_eShape) {
-    case EMSHAPE_RECTANGLE:
-        cleanBoundVertex();
-        addBoundVertex(new Position(0, m_fBoundSize / 2));
-        addBoundVertex(new Position(m_fSize, m_fBoundSize / 2));
-
-        addBoundVertex(new Position(0, m_fSize - m_fBoundSize / 2));
-        addBoundVertex(new Position(m_fSize, m_fSize - m_fBoundSize / 2));
-
-        addBoundVertex(new Position(m_fBoundSize / 2, m_fBoundSize / 2));
-        addBoundVertex(new Position(m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
-
-        addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fBoundSize / 2));
-        addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
-        break;
-    default:
-        break;
-    }
-}
-
 QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
 {
     QSGNode *backGround = NULL;
@@ -150,7 +153,6 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
     qDebug() << __FUNCTION__;
 
     updateVertex();
-    updateBoundVertex();
 
     if (!oldNode) {
         backGround = new QSGNode;

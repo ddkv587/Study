@@ -8,9 +8,10 @@ class Cell : public QQuickItem
     Q_OBJECT
 public:
     enum ENUM_ESHAPE {
-        EMSHAPE_INVALID 	= -1,
-        EMSHAPE_RECTANGLE,
-        EMSHAPE_CIRCLE,
+        EMSHAPE_Invalid 	= -1,
+        EMSHAPE_Rectangle,
+        EMSHAPE_RoundedRectangle,
+        EMSHAPE_Circle,
         EMSHAPE_MAX
     };
 
