@@ -10,10 +10,10 @@ Snake::Snake()
 {
     setFlag(ItemHasContents, true);
 
-    addCell(Cell::Position(0, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE*2, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE*3, 0), Cell::EMSHAPE_RECTANGLE, DEF_CELL_SIZE);
+    addCell(Cell::Position(0, 0), Cell::EMSHAPE_Rectangle, DEF_CELL_SIZE);
+    addCell(Cell::Position(DEF_CELL_SIZE, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
+    addCell(Cell::Position(DEF_CELL_SIZE*2, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
+    addCell(Cell::Position(DEF_CELL_SIZE*3, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
 }
 
 Snake::~Snake()

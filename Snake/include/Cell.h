@@ -3,6 +3,12 @@
 
 #include <QQuickItem>
 
+#define DEF_CIRCLE_COUNT 100
+#define PI 3.141592654
+
+
+class QSGGeometry;
+
 class Cell : public QQuickItem
 {
     Q_OBJECT
@@ -74,5 +80,7 @@ private:
     QList<Position *> m_lstVertex;
     QList<Position *> m_lstVertexBound;
     ENUM_ESHAPE m_eShape;
+    QSGGeometry *m_pGeoContain;
+    QSGGeometry *m_pGeoBound;
 };
 #endif

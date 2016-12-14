@@ -1,5 +1,6 @@
 #include <QSGNode>
 #include <QSGFlatColorMaterial>
+#include <math.h>
 #include "SnakeGlobal.h"
 
 Cell::Cell(QQuickItem *parent)
@@ -11,6 +12,9 @@ Cell::Cell(QQuickItem *parent)
     setFlag(ItemHasContents, true);
     setX(0);
     setY(0);
+
+    m_pGeoContain = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
+    m_pGeoBound   = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertexBound.count());
 }
 
 Cell::Cell(const Cell &cell, QQuickItem *parent)
@@ -22,7 +26,10 @@ Cell::Cell(const Cell &cell, QQuickItem *parent)
 
     m_fSize = cell.size();
     m_fBoundSize = cell.boundSize();
-    m_eShape = cell.shape();   
+    m_eShape = cell.shape();
+
+    m_pGeoContain = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
+    m_pGeoBound   = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertexBound.count());
 }
 
 Cell::~Cell()
@@ -96,6 +103,9 @@ void Cell::updateVertex()
         addVertex(new Position(m_fSize - m_fBoundSize, m_fSize - m_fBoundSize));
         addVertex(new Position(m_fSize - m_fBoundSize, m_fBoundSize));
 
+        m_pGeoContain->setDrawingMode(GL_TRIANGLE_FAN);
+        m_pGeoContain->allocate(m_lstVertex.count());
+
         if(m_fBoundSize > 0) {
             cleanBoundVertex();
             addBoundVertex(new Position(0, m_fBoundSize / 2));
@@ -109,19 +119,35 @@ void Cell::updateVertex()
 
             addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fBoundSize / 2));
             addBoundVertex(new Position(m_fSize - m_fBoundSize / 2, m_fSize - m_fBoundSize / 2));
+
+            m_pGeoBound->setDrawingMode(GL_LINES);
+            m_pGeoBound->allocate(m_lstVertexBound.count());
+            m_pGeoBound->setLineWidth(m_fBoundSize);
         }
         break;
 
     case EMSHAPE_RoundedRectangle:
         cleanVertex();
 
-
         break;
     case EMSHAPE_Circle:
         cleanVertex();
+        addVertex(new Position(m_fSize / 2, m_fSize / 2));
+        float r = m_fSize / 2 - m_fBoundSize;
+        for (int index = 0; index <= DEF_CIRCLE_COUNT; ++index) {
+            addVertex(new Position(m_fSize / 2 + r * cos(2.0 * PI / DEF_CIRCLE_COUNT * index), m_fSize / 2 + r * sin(2.0 * PI / DEF_CIRCLE_COUNT * index)));
+        }
+        m_pGeoContain->setDrawingMode(GL_TRIANGLE_FAN);
+        m_pGeoContain->allocate(m_lstVertex.count());
 
-        break;
-    default:
+        if (m_fBoundSize > 0) {
+            for (int index = 0; index <= DEF_CIRCLE_COUNT; ++index) {
+                addBoundVertex(new Position(m_fSize / 2 + (r + m_fBoundSize / 2) * cos(2 * PI / DEF_CIRCLE_COUNT * index), m_fSize / 2 + (r + m_fBoundSize/2) * sin(2 * PI / DEF_CIRCLE_COUNT * index)));
+            }
+            m_pGeoBound->setDrawingMode(GL_LINE_LOOP);
+            m_pGeoBound->allocate(m_lstVertexBound.count());
+            m_pGeoBound->setLineWidth(m_fBoundSize);
+        }
         break;
     }
 }
@@ -147,27 +173,20 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
 {
     QSGNode *backGround = NULL;
 
-    QSGGeometry *geometryContain;
-    QSGGeometry *geometryBound;
+    QSGGeometryNode *contain;
+    QSGGeometryNode *bound;
 
     qDebug() << __FUNCTION__;
 
     updateVertex();
 
     if (!oldNode) {
-        backGround = new QSGNode;
+        backGround  = new QSGNode;
 
-        QSGGeometryNode *contain = new QSGGeometryNode;
-        QSGGeometryNode *bound   = new QSGGeometryNode;
+        contain     = new QSGGeometryNode;
+        bound       = new QSGGeometryNode;
 
-        geometryContain = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertex.count());
-        geometryBound   = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),  m_lstVertexBound.count());
-
-
-
-        geometryContain->setDrawingMode(GL_TRIANGLE_FAN);
-        geometryContain->allocate(m_lstVertex.count());
-        contain->setGeometry(geometryContain);
+        contain->setGeometry(m_pGeoContain);
         contain->setFlag(QSGNode::OwnsGeometry);
 
         QSGFlatColorMaterial *materialContain = new QSGFlatColorMaterial;
@@ -177,10 +196,7 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
 
 
 
-        geometryBound->setDrawingMode(GL_LINES);
-        geometryBound->allocate(m_lstVertexBound.count());
-        geometryBound->setLineWidth(m_fBoundSize);
-        bound->setGeometry(geometryBound);
+        bound->setGeometry(m_pGeoBound);
         bound->setFlag(QSGNode::OwnsGeometry);
 
         QSGFlatColorMaterial *materialBound = new QSGFlatColorMaterial;
@@ -193,18 +209,16 @@ QSGNode *Cell::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData
         backGround->appendChildNode(bound);
     } else {
         backGround = oldNode;
-        geometryContain = (static_cast<QSGGeometryNode *>(backGround->childAtIndex(0)))->geometry();
-        geometryBound   = (static_cast<QSGGeometryNode *>(backGround->childAtIndex(1)))->geometry();
     }
 
-    QSGGeometry::Point2D *verticesContain = geometryContain->vertexDataAsPoint2D();
+    QSGGeometry::Point2D *verticesContain = m_pGeoContain->vertexDataAsPoint2D();
     qDebug()<<"=================== begin";
     for (int i = 0; i < m_lstVertex.count(); ++i) {
         qDebug() << "<" << m_lstVertex[i]->X() << "," << m_lstVertex[i]->Y() << ">";
         verticesContain[i].set(m_lstVertex[i]->X(), m_lstVertex[i]->Y());
     }
 
-    QSGGeometry::Point2D *verticesBound = geometryBound->vertexDataAsPoint2D();
+    QSGGeometry::Point2D *verticesBound = m_pGeoBound->vertexDataAsPoint2D();
     qDebug()<<"=================== begin";
     for (int i = 0; i < m_lstVertexBound.count(); ++i) {
         qDebug() << "<" << m_lstVertexBound[i]->X() << "," << m_lstVertexBound[i]->Y() << ">";
