@@ -13,31 +13,6 @@ class Cell : public QQuickItem
 {
     Q_OBJECT
 public:
-    enum ENUM_ESHAPE {
-        EMSHAPE_Invalid 	= -1,
-        EMSHAPE_Rectangle,
-        EMSHAPE_RoundedRectangle,
-        EMSHAPE_Circle,
-        EMSHAPE_MAX
-    };
-
-    struct Position {
-
-        inline float X()           { return x; }
-        inline float Y()           { return y; }
-        inline void setX(float _x) { x = _x; }
-        inline void setY(float _y) { y = _y; }
-
-        inline bool operator ==(Position temp) {
-            return (temp.X() == x && temp.Y() == y) ? true : false;
-        }
-
-        Position(float _x,float _y) {x = _x; y = _y;}
-
-    private:
-        float x;
-        float y;
-    };
 
 public:
     Cell(QQuickItem *parent = NULL);
@@ -64,7 +39,6 @@ public:
 
     QSGNode             *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *);
 
-
 signals:
     void                notifyShapeChanged(ENUM_ESHAPE newShape, ENUM_ESHAPE oldShape);
     void                notifySizeChanged(int newSize, int oldSize);
@@ -77,10 +51,8 @@ private:
 private:
     float m_fSize;
     float m_fBoundSize;
-    QList<Position *> m_lstVertex;
-    QList<Position *> m_lstVertexBound;
+
     ENUM_ESHAPE m_eShape;
-    QSGGeometry *m_pGeoContain;
-    QSGGeometry *m_pGeoBound;
+
 };
 #endif

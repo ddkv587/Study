@@ -6,7 +6,8 @@ CONFIG += c++11
 SOURCES += main.cpp \
     source/Cell.cpp \
     source/Control.cpp \
-    source/Snake.cpp
+    source/Snake.cpp \
+    source/Shape.cpp
 
 RESOURCES += qml.qrc
 
@@ -20,4 +21,5 @@ HEADERS += \
     include/Cell.h \
     include/Control.h \
     include/Snake.h \
-    SnakeGlobal.h
+    SnakeGlobal.h \
+    include/Shape.h

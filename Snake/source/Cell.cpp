@@ -128,6 +128,15 @@ void Cell::updateVertex()
 
     case EMSHAPE_RoundedRectangle:
         cleanVertex();
+        addVertex(new Position(m_fSize / 2, m_fSize / 2));
+        float r = width() / 2 - m_fBoundSize;
+
+        addVertex(new Position(m_fSize / 2, m_fSize / 2));
+
+        for (int index = 0; index <= DEF_CIRCLE_COUNT; ++index) {
+            addVertex(new Position(m_fSize / 2 + r * cos(2.0 * PI / DEF_CIRCLE_COUNT * index), m_fSize / 2 + r * sin(2.0 * PI / DEF_CIRCLE_COUNT * index)));
+        }
+
 
         break;
     case EMSHAPE_Circle:
