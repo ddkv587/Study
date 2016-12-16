@@ -16,8 +16,8 @@ public:
     Snake();
     virtual ~Snake();
 
-    void        addCell(const Cell cell);
-    void        addCell(Cell::Position posi, Cell::ENUM_ESHAPE shape, int size);
+    void        addCell(const Cell &cell);
+    void        addCell(QRectF rect, BaseShape::ENUM_ESHAPE shape);
     Cell        *delCell();
 
     void        setParent(QQuickItem* parent);

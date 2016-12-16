@@ -4,16 +4,15 @@
 #include <assert.h>
 #include "SnakeGlobal.h"
 
-
 Snake::Snake()
     : m_color(Qt::white)
 {
     setFlag(ItemHasContents, true);
 
-    addCell(Cell::Position(0, 0), Cell::EMSHAPE_Rectangle, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE*2, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
-    addCell(Cell::Position(DEF_CELL_SIZE*3, 0), Cell::EMSHAPE_Circle, DEF_CELL_SIZE);
+//    addCell(QRectF(0, 0, DEF_CELL_SIZE, DEF_CELL_SIZE), BaseShape::EMSHAPE_Rectangle);
+//    addCell(QRectF(DEF_CELL_SIZE, 0, DEF_CELL_SIZE, DEF_CELL_SIZE), BaseShape::EMSHAPE_Circle);
+//    addCell(QRectF(DEF_CELL_SIZE * 2, 0, DEF_CELL_SIZE, DEF_CELL_SIZE), BaseShape::EMSHAPE_Circle);
+    addCell(QRectF(DEF_CELL_SIZE * 3, 0, DEF_CELL_SIZE, DEF_CELL_SIZE), BaseShape::EMSHAPE_Circle);
 }
 
 Snake::~Snake()
@@ -21,24 +20,19 @@ Snake::~Snake()
 
 }
 
-void Snake::addCell(const Cell cell)
+void Snake::addCell(const Cell& cell)
 {
-    Cell *cellTemp = new Cell(cell);
-    cellTemp->setParent(this);
-    m_lstPCell.insert(0, cellTemp);
+//    Cell *cellTemp = new Cell(cell);
+//    cellTemp->setParent(this);
+//    m_lstPCell.insert(0, cellTemp);
 }
 
-void Snake::addCell(Cell::Position posi, Cell::ENUM_ESHAPE shape, int size)
+void Snake::addCell(QRectF rect, BaseShape::ENUM_ESHAPE shape)
 {
-    Cell *cell = new Cell(this);
-
-    cell->setX(posi.X());
-    cell->setY(posi.Y());
-    cell->setShape(shape);
-    cell->setSize(size);
+    Cell *cell = new Cell(shape, this);
+    cell->updateAnchios(rect);
+    qDebug() << rect.x() << "," << rect.y();
     cell->setBoundSize(2);
-
-    qDebug() << "<" << posi.X() << "," << posi.Y() << ">" <<endl;
 
     m_lstPCell.insert(0, cell);
 }

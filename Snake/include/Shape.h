@@ -2,11 +2,14 @@
 #define __SHAPEH__
 
 #include <QObject>
+#include <QRectF>
+#include <QQuickItem>
+#include <QSGFlatColorMaterial>
 
-class QRectF;
+#define PI 3.141592654
+
 class QSGGeometry;
-class QSGFlatColorMaterial;
-class BaseShape : public QObject
+class BaseShape : public QQuickItem
 {
     Q_OBJECT
 public:
@@ -21,63 +24,94 @@ public:
     struct tagGeometryData {
         QSGFlatColorMaterial*   m_pMaterial;
         QList<QPointF *>        m_lstVertex;
+
+        tagGeometryData() {
+            m_pMaterial = NULL;
+            m_lstVertex.clear();
+        }
     };
 
 public:
-    BaseShape(const QRectF& rect);
+    BaseShape(QQuickItem *parent = NULL);
+    BaseShape(const QRectF& rect, QQuickItem *parent = NULL);
     virtual ~BaseShape() {}
 
-    void                    addGeometry(QSGGeometry *geometry)      { m_lstGeometry.append(geometry); }
-    QList <QSGGeometry *>   getGeometry()                           { return m_lstGeometry; }
+    inline void             setAnchios(const QRectF& rect)          { m_anchios = rect; }
+    inline QRectF           getAnchios()                            { return m_anchios; }
 
-    void                    updateGeometryMaterial(QSGGeometry *geometry);
+
+    inline void             setBoundSize(qreal size)                { m_fBoundSize = size; }
+    inline int              getBoundSize()                          { return m_fBoundSize; }
+
+    void                    addGeometry(QSGGeometry *geometry)      { m_lstGeometry.append(geometry); }
+    QList <QSGGeometry *>   getGeometryList()                       { return m_lstGeometry; }
+
+    void                    updateGeometryMaterial(QSGGeometry *key, QSGFlatColorMaterial* material);
 
     void                    addGeometryVertex(QSGGeometry *key, QPointF *point);
     void                    cleanGeometryVertex(QSGGeometry *key);
-    void                    updateGeometryVertex(QSGGeometry *) = 0;
 
     QSGFlatColorMaterial*   getGeometryMaterial(QSGGeometry *key);
     QList<QPointF *>        getGeometryVertex(QSGGeometry *key);
 
-private:
+    virtual void            updateVertex() = 0;
+
+public:
     QRectF                                          m_anchios;
+    qreal                                           m_fBoundSize;
 
     QList <QSGGeometry *>                           m_lstGeometry;
-    QMap  <QSGGeometry *, tagGeometryData>          m_lstGeometryData;
+    QMap  <QSGGeometry *, tagGeometryData*>         m_lstGeometryData;
 };
 
 class RectangleShape : public BaseShape
 {
     Q_OBJECT
 public:
-    RectangleShape();
+    RectangleShape(QQuickItem *parent = NULL);
     virtual ~RectangleShape() {}
 
-    void            updateVertex(QSGGeometry *key);
+    void                        updateVertex();
 
-    inline void     setContainColor(QColor color)   { m_containColor = color; }
-    inline QColor   getContainColor()               { return m_containColor; }
+    void                        setContainColor(QColor color);
+    QSGFlatColorMaterial*       getContainMaterial();
 
-    inline void     setBoundColor(QColor color)     { m_boundColor = color; }
-    inline QColor   getBoundColor()                 { return m_boundColor; }
+
+    void                        setBoundColor(QColor color);
+    QSGFlatColorMaterial*       getBoundMaterial();
 
 private:
-
-    QSGGeometry*    m_pGeometryContain;
-    QSGGeometry*    m_pGeometryBound;
-
-    QColor          m_containColor;
-    QColor          m_boundColor;
+    QSGGeometry*            m_pGeometryContain;
+    QSGGeometry*            m_pGeometryBound;
 };
 
 class RoundedRectangleShape : public BaseShape
 {
+    Q_OBJECT
+public:
+    RoundedRectangleShape(QQuickItem *parent = NULL);
+    virtual ~RoundedRectangleShape() {}
 
+    void                        updateVertex() {}
 };
 
 class CircleShape : public BaseShape
 {
+    Q_OBJECT
+public:
+    CircleShape(QQuickItem *parent = NULL);
+    virtual ~CircleShape() {}
 
+    void                    setCirclePoint(int point)   { m_iCirclePoint = point; }
+    int                     getCirclePoint()            { return m_iCirclePoint; }
+
+    void updateVertex();
+
+private:
+    int                     m_iCirclePoint;
+
+    QSGGeometry*            m_pGeometryContain;
+    QSGGeometry*            m_pGeometryBound;
 };
 
 #endif // SHAPE_H
