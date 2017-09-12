@@ -3,12 +3,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 #include "Memory.h"
 
 Memory* Memory::s_Instance = NULL;
 
-static const char* DEFAULT_FILE_PATH 		= "/opt/wayland_buffer/";
+static const char* DEFAULT_FILE_PATH 		= "/tmp/wayland_buffer/";
 static const char* DEFAULT_FILE_TEMPLATE 	= "share-buffer-XXXXXX";
 
 Memory* Memory::getInstance()
@@ -22,14 +25,19 @@ Memory* Memory::getInstance()
 
 const Memory::tagMemoryNode* Memory::createMemory(off_t size)
 {
+	DIR* pDir;
+	if ( NULL == (pDir = opendir(DEFAULT_FILE_PATH)) ) {
+		assert( 0 == mkdir(DEFAULT_FILE_PATH, 0774) );
+	} else {	
+		closedir(pDir);
+	}
+
 	char* name = (char *)malloc(strlen(DEFAULT_FILE_PATH) + strlen(DEFAULT_FILE_TEMPLATE));
 
 	strncpy(name, DEFAULT_FILE_PATH, strlen(DEFAULT_FILE_PATH));
 	strncpy(name + strlen(DEFAULT_FILE_PATH), DEFAULT_FILE_TEMPLATE, strlen(DEFAULT_FILE_TEMPLATE));
 	
-	printf("name: %s\n", name);
-	int fd = mkostemp(name, O_CLOEXEC | O_CREAT );
-	perror("mkostemp");
+	int fd = mkostemp(name, O_CLOEXEC );
 	assert ( fd > 0 );	
 	unlink( name );
 	free(name);
