@@ -28,6 +28,9 @@ struct tagWLBody
 	{}
 } *g_pWLDataBody;
 
+const static Memory::tagMemoryNode* g_pNodeBuff;
+extern struct wl_callback_listener	frame_listener;
+
 void global_registry_handler(void *data,
 		       struct wl_registry *registry,
 		       uint32_t name,
@@ -111,6 +114,18 @@ struct wl_shm_listener shm_listener = {
 	.format = shm_format,
 };
 
+void paint_pixels()
+{
+	static uint32_t pixel_value = 0x00;
+	uint32_t *pixel = (uint32_t*)g_pNodeBuff->pData;
+
+	for ( int index=0; index < DEF_WIDTH * DEF_HEIGHT; ++index )
+	{
+		*pixel++ = pixel_value;
+	}
+	pixel_value = (pixel_value + 0x10101) % 0xffffff;
+}
+
 int ht = 0;
 
 void frame_done(void *data,
@@ -118,12 +133,14 @@ void frame_done(void *data,
 		     uint32_t callback_data)
 {
 	wl_callback_destroy(g_pWLDataBody->frame_callback);
-	if ( ht == 0 ) ht = HEIGHT;
-	wl_surface_damage(g_pWLDataBody->surface, g_pWLDataBody->buffer, 0, 0, DEF_WIDTH, ht--);
+	if ( ht == 0 ) ht = DEF_HEIGHT;
+	wl_surface_damage(g_pWLDataBody->surface, 0, 0, DEF_WIDTH, ht--);
 	
 	paint_pixels();
-	frame_callback
-
+	g_pWLDataBody->frame_callback = wl_surface_frame(g_pWLDataBody->surface);
+	wl_surface_attach(g_pWLDataBody->surface, g_pWLDataBody->buffer, 0, 0);
+	wl_callback_add_listener(g_pWLDataBody->frame_callback, &frame_listener, NULL);
+	wl_surface_commit(g_pWLDataBody->surface);
 }
 
 struct wl_callback_listener frame_listener = {
@@ -133,7 +150,7 @@ struct wl_callback_listener frame_listener = {
 	 * Notify the client when the related request is done.
 	 * @param callback_data request-specific data for the callback
 	 */
-	.done = frame_done;
+	.done = frame_done,
 };
 
 int main(int argc, const char *argv[])
@@ -164,27 +181,24 @@ int main(int argc, const char *argv[])
 	wl_shell_surface_set_toplevel(shell_surface);
 	wl_shell_surface_add_listener(shell_surface, &shell_surface_listener, NULL);
 
-	const Memory::tagMemoryNode* pNodeBuff = Memory::getInstance()->createMemory( DEF_WIDTH * DEF_HEIGHT * 4 );
-	assert(NULL != pNodeBuff);
+	g_pNodeBuff = Memory::getInstance()->createMemory( DEF_WIDTH * DEF_HEIGHT * 4 );
+	assert(NULL != g_pNodeBuff);
 
-	struct wl_shm_pool* pool = wl_shm_create_pool(g_pWLDataBody->shm, pNodeBuff->fd, pNodeBuff->size);
+	struct wl_shm_pool* pool = wl_shm_create_pool(g_pWLDataBody->shm, g_pNodeBuff->fd, g_pNodeBuff->size);
 	assert(NULL != pool);
 
 	g_pWLDataBody->buffer = wl_shm_pool_create_buffer(pool, 0, DEF_WIDTH, DEF_HEIGHT, DEF_WIDTH * 4, WL_SHM_FORMAT_XRGB8888);
 	wl_shm_pool_destroy(pool);
 
-	wl_surface_attach(surface, g_pWLDataBody->buffer, 0, 0);
-	wl_surface_commit(surface);
+	wl_surface_attach(g_pWLDataBody->surface, g_pWLDataBody->buffer, 0, 0);
+	wl_surface_commit(g_pWLDataBody->surface);
 
-	g_pWLDataBody->frame_callback =  wl_surface_frame(surface);
+	g_pWLDataBody->frame_callback =  wl_surface_frame(g_pWLDataBody->surface);
 	assert(NULL != g_pWLDataBody->frame_callback);
 
-	wl_callback_add_listener(frame_callback, &frame_listener, NULL);
-
-	uint32_t *pixel = (uint32_t*)pNodeBuff->pData;
-	for ( int index = 0; index < DEF_WIDTH * DEF_HEIGHT; ++index ) {
-		*pixel++ = 0xffff;
-	}
+	wl_callback_add_listener(g_pWLDataBody->frame_callback, &frame_listener, NULL);
+	frame_done(NULL, NULL, 0);
+	while(wl_display_dispatch(g_pWLDataBody->display) != -1);
 
 	wl_display_disconnect(g_pWLDataBody->display);
 	return 0;
