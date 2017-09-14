@@ -23,7 +23,7 @@ Memory* Memory::getInstance()
 	return s_Instance;
 }
 
-const Memory::tagMemoryNode* Memory::createMemory(off_t size)
+int Memory::createMemory(off_t size)
 {
 	DIR* pDir;
 	if ( NULL == (pDir = opendir(DEFAULT_FILE_PATH)) ) {
@@ -45,17 +45,23 @@ const Memory::tagMemoryNode* Memory::createMemory(off_t size)
 	assert( ftruncate(fd, size) == 0 );
 
 	void* pData = mmap(NULL, size, PROT_WRITE | PROT_WRITE, MAP_SHARED, fd, 0);
-
 	assert ( pData != MAP_FAILED );
-	
-	m_memory.fd 	= fd;
-	m_memory.size 	= size;
-	m_memory.pData 	= pData;
 
-	return &m_memory;
+	tagMemoryNode* pNode = new tagMemoryNode();
+	pNode->fd 		= fd;
+	pNode->size 	= size;
+	pNode->pData 	= pData;
+
+	m_mapMemory.insert(MemoryMap::value_type(fd, pNode));
+	return fd;
 }
 
 void Memory::deleteMemort()
 {
 	m_memory.reset();
+}
+
+const tagMemoryNode* Memory::getMemory(int fd)
+{
+	if ( m_mapMemory.left.find )
 }

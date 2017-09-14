@@ -2,6 +2,9 @@
 #define __MEMORY_H__
 
 #include <stdlib.h>
+#include <boost/bitmap.hpp>
+
+using namespace boost;
 class Memory
 {
 	public:
@@ -21,17 +24,20 @@ class Memory
 				fd 		= -1;
 			}
 		};
+		typedef bimap<int, tagMemoryNode*> 	MemoryMap;
 	public:
 		Memory() {}
 		~Memory() {}
 
-		static Memory* getInstance();
+		static Memory* 				getInstance();
 
-		const tagMemoryNode* 	createMemory(off_t size);	
-		void					deleteMemort();
+		int 				 		createMemory(off_t size);	
+		void						deleteMemory(int fd);
+
+		const tagMemoryNode*		getMemory(int fd);
 
 	private:
-		static Memory*	s_Instance;
-		tagMemoryNode 	m_memory;
+		static Memory*				s_Instance;
+		MemoryMap 					m_mapMemory;
 };
 #endif
